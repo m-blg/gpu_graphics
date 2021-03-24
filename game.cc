@@ -37,6 +37,12 @@ namespace Input {
         Input::keys_hold.init_bits(KEY_COUNT);
         Input::keys_up.init_bits(KEY_COUNT);
 
+        for (u32 i = 0; i < keys_down.cap; i++) {
+            keys_down.buffer[i] = 0;           
+            keys_hold.buffer[i] = 0;           
+            keys_up.buffer[i] = 0;       
+        }
+
         Input::mouse_button_down.init_bits(MOUSE_BUTTON_COUNT);
         Input::mouse_button_hold.init_bits(MOUSE_BUTTON_COUNT);
         Input::mouse_button_up.init_bits(MOUSE_BUTTON_COUNT);
@@ -62,3 +68,4 @@ void game_init();
 void game_shut();
 
 void game_update();
+void draw_gui();

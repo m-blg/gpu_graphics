@@ -5,6 +5,13 @@
 #include <SDL2/SDL_opengl.h>
 #include <SDL2/SDL_timer.h> 
 
+
+#include "import/imgui/imgui_draw.cpp"
+#include "import/imgui/imgui_widgets.cpp"
+#include "import/imgui/imgui.cpp"
+#include "import/imgui/imgui_impl_sdl.cpp"
+#include "import/imgui/imgui_impl_opengl3.cpp"
+
 #include "cp_lib/basic.cc"
 #include "cp_lib/vector.cc"
 
@@ -46,6 +53,23 @@ int main()
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(gl_debug_callback, null);
     //
+    
+    // gui init
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
+    // Setup Platform/Renderer bindings
+    ImGui_ImplSDL2_InitForOpenGL(window, &gr_context);
+    ImGui_ImplOpenGL3_Init("#version 440 core");
+    //
+
 
     game_init();
 
@@ -90,15 +114,33 @@ int main()
                     Input::mouse_pos = { event.motion.x, event.motion.y };
                 } break;
             }
+
+            // gui events
+            // ImGui_ImplSDL2_ProcessEvent(&event);
         }
 
+        // render gui
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL2_NewFrame(window);
+        ImGui::NewFrame();        
+
         game_update();
+        draw_gui();
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        //
 
         SDL_GL_SwapWindow(window);
         SDL_Delay(1000/60);
     }
 
     game_shut();
+
+    // gui cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
 
     SDL_GL_DeleteContext(gr_context);
     SDL_DestroyWindow(window);

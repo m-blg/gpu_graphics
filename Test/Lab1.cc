@@ -1,11 +1,10 @@
 
 
 #define GUI_ENABLED 1
-#include "../SDL_main.cc"
+#include "gpu_graphics/SDL_main.cc"
 
-
-#include "../loadings.cc"
-#include "../mesh.cc"
+#include "gpu_graphics/loadings.cc"
+#include "gpu_graphics/mesh.cc"
 
 #include "cp_lib/basic.cc"
 #include "cp_lib/array.cc"
@@ -16,42 +15,25 @@
 
 using namespace cp;
 
-sbuff<vec3f, 8> cube_vrt_positions = {{
-    { -1, -1, -1 },
-	{ 1, -1, -1 },
-	{ 1, 1, -1 },
-	{ -1, 1, -1 },
-    { -1, 1, 1 },
-	{ 1, 1, 1 },
-	{ 1, -1, 1 },
-	{ -1, -1, 1 }
+sbuff<vec2f, 4> quad_vrt_positions = {{
+    { -1, -1 },
+	{ 1, -1 },
+	{ 1, 1 },
+	{ -1, 1 },
 }};
 
-sbuff<vec2f, 8> cube_uvs = {{
-    {0, 0},
-    {1, 0},
-    {1, 1},
-    {0, 1},
+sbuff<vec2f, 4> quad_uvs = {{
     {0, 0},
     {1, 0},
     {1, 1},
     {0, 1}
 }};
 
-sbuff<u32[3], 10> cube_triangles = {{
-    //{0, 2, 1}, //face front
-    //{0, 3, 2},
-    {2, 3, 4}, //face top
-    {2, 4, 5},
-    {1, 2, 5}, //face right
-    {1, 5, 6},
-    {0, 7, 4}, //face left
-    {0, 4, 3},
-    {5, 4, 7}, //face back
-    {5, 7, 6},
-    {0, 6, 7}, //face bottom
-    {0, 1, 6}
+sbuff<u32[3], 10> quad_triangles = {{
+    {0, 1, 2}, //face front
+    {0, 2, 3}
 }};
+
 
 // sbuff<u32[2], 12> cube_edges = {{
 //     {0, 1}, {0, 3}, {1, 2}, {2, 3},
@@ -59,10 +41,10 @@ sbuff<u32[3], 10> cube_triangles = {{
 //     {0, 7}, {1, 6}, {2, 5}, {3, 4},
 // }};
 
-Mesh cube_mesh = {
-    { begin(&cube_vrt_positions), cap(&cube_vrt_positions) }, 
-    { begin(&cube_triangles), cap(&cube_triangles) }
-};
+//Mesh cube_mesh = {
+    //{ begin(&cube_vrt_positions), cap(&cube_vrt_positions) }, 
+    //{ begin(&cube_triangles), cap(&cube_triangles) }
+//};
 
 u32 cube_vao_id;
 u32 cube_vbo_id;
