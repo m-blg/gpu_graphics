@@ -45,6 +45,17 @@ Texture create_texture_from_file(const char* file_name) {
     return ret;
 }
 
+
+template <u32 t_uniform_count>
+struct Shader {
+    u32 id;
+    
+    struct {
+        const char* name;
+        u32 id;
+    } uniforms[t_uniform_count];
+};
+
 #define SHADER_COUNT 1
 sbuff<u32, SHADER_COUNT> shaders;
 

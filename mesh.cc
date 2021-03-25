@@ -36,6 +36,7 @@ struct Material {
     // shader data
     // textures
     u32 texture_names[t_texture_count];
+
 };
 
 struct Transform {
