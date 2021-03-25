@@ -40,7 +40,7 @@ Texture create_texture_from_file(const char* file_name) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, ret.size.x, ret.size.y, 
             0, GL_RGBA, GL_UNSIGNED_BYTE, ret.buffer);
     //glGenerateMipmap(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    // glBindTexture(GL_TEXTURE_2D, 0);
 
     return ret;
 }

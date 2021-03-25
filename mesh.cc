@@ -30,10 +30,12 @@ void Mesh::shut() {
     index_buffer.shut();
 }
 
+template <u32 t_texture_count>
 struct Material {
-    u32 shader_id;
+    u32 shader_name;
     // shader data
     // textures
+    u32 texture_names[t_texture_count];
 };
 
 struct Transform {
