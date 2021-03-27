@@ -12,6 +12,44 @@
 
 using namespace cp;
 
+struct {
+    u32 vao;
+    u32 vbo;
+    u32 ibo;
+    u32 shader;
+} gl_cache;
+
+void bind_vao(u32 vao) {
+    if (vao != gl_cache.vao) {
+        glBindVertexArray(vao);
+        gl_cache.vao = vao;
+    }
+}
+
+
+void bind_vbo(u32 vbo) {
+    if (vbo != gl_cache.vbo) {
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        gl_cache.vbo = vbo;
+    }
+}
+
+
+void bind_ibo(u32 ibo) {
+    if (ibo != gl_cache.ibo) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+        gl_cache.ibo = ibo;
+    }
+}
+
+
+void bind_shader(u32 shader) {
+    if (shader != gl_cache.shader) {
+        glUseProgram(shader);
+        gl_cache.shader = shader;
+    }
+}
+
 struct Mesh {
     dbuff<vec3f> vertex_buffer;
     dbuff<u32[3]> index_buffer;
@@ -30,20 +68,27 @@ void Mesh::shut() {
     index_buffer.shut();
 }
 
-template <u32 t_texture_count>
-struct Material {
+struct Material_Sprite2D {
     u32 shader_name;
-    // shader data
-    // textures
-    u32 texture_names[t_texture_count];
 
+    u32 texture_name;
 };
 
 struct Transform {
     vec3f position;
     quat rotation;
     vec3f scale;
+
+    void init();
 };
+
+void Transform::init() {
+    position = {};
+    rotation = { 1, 0, 0, 0 }; 
+    scale = { 1, 1, 1 };
+}
+
+
 
 mat4f model_matrix(Transform *transform) {
     vec3f& position = transform->position;
@@ -82,15 +127,17 @@ mat4f view_matrix(Transform *transform) {
     return rotation_m * translation_m;
 }
 
+template <typename t_Material>
 struct Render_Object {
     Transform *transform;
     Mesh *mesh;
-    Material *material;
-    u32 vbo_id;
-    u32 ibo_id;
+    t_Material *material;
+    u32 vbo;
+    u32 ibo;
 };
 
-void render(Render_Object *self) {
+template <typename t_Render_Object>
+void render(t_Render_Object *self) {
     glUseProgram(self->material->shader_id);
     glBindBuffer(GL_ARRAY_BUFFER, self->vbo_id);
     glBufferData(GL_ARRAY_BUFFER, cap(&self->mesh->vertex_buffer), begin(&self->mesh->vertex_buffer), GL_DYNAMIC_DRAW);
@@ -138,3 +185,27 @@ mat4f proj_xy_persp_matrix(vec2f window_size, vec2f pixels_per_unit, vec2f z_bou
     //};
 }
 
+
+vec2f screen_to_view_space(vec2f p, vec2f window_size, vec2f pixels_per_unit) {
+    vec2f centered = p - window_size / 2.0f;
+    return {centered.x / pixels_per_unit.x, -centered.y / pixels_per_unit.y};
+}
+
+vec2f screen_to_world_space(vec2f p, Transform camera_transform, vec2f window_size, vec2f pixels_per_unit) {
+    vec2f view = screen_to_view_space(p, window_size, pixels_per_unit);
+    return view + vec2f(camera_transform.position.x, camera_transform.position.y);
+}
+
+
+template <typename T>
+struct Rect {
+    vec2<T> lb;
+    vec2<T> rt;
+};
+
+template <typename T1, typename T2>
+bool rect_is_contained(Rect<T1> rect, vec2<T2> p) {
+    return (rect.lb.x <= p.x && p.x <= rect.rt.x && rect.lb.y <= p.y && p.y <= rect.rt.y);
+}
+
+using Box_Collider2D = Rect<f32>;

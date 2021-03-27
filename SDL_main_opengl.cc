@@ -51,9 +51,13 @@ int main()
 
 
     while (is_running) {
-        for (u32 i = 0; i < Input::keys_down.cap; i++) {
+        for (u32 i = 0; i < bitfld_byte_count(KEY_COUNT); i++) {
             Input::keys_down.buffer[i] = 0;
             Input::keys_up.buffer[i] = 0;
+        }
+        for (u32 i = 0; i < bitfld_byte_count(MOUSE_BUTTON_COUNT); i++) {
+            Input::mouse_buttons_down.buffer[i] = 0;
+            Input::mouse_buttons_hold.buffer[i] = 0;
         }
 
         // Process events.
@@ -74,20 +78,22 @@ int main()
                         set_bit_low(Input::keys_hold, event.key.keysym.sym);
                     }
                 } break;
-                // case SDL_MOUSEBUTTONDOWN: {
-                //     if (event.key.keysym.sym < MOUSE_BUTTON_COUNT) {
-                //         set_bit_high(Input::mouse_button_down, event.key.keysym.sym);
-                //         set_bit_low(Input::mouse_button_hold, event.key.keysym.sym);
-                //     }
-                // } break;
-                // case SDL_MOUSEBUTTONUP: {
-                //     if (event.key.keysym.sym < MOUSE_BUTTON_COUNT) {
-                //         set_bit_high(Input::mouse_button_up, event.key.keysym.sym);
-                //         set_bit_low(Input::mouse_button_hold, event.key.keysym.sym);
-                //     }
-                // } break;
+                case SDL_MOUSEBUTTONDOWN: {
+                    u8 button = event.button.button - 1;
+                    if (button < MOUSE_BUTTON_COUNT) {
+                        set_bit_high(Input::mouse_buttons_down, button);
+                        set_bit_low(Input::mouse_buttons_hold, button);
+                    }
+                } break;
+                case SDL_MOUSEBUTTONUP: {
+                    u8 button = event.button.button - 1;
+                    if (button < MOUSE_BUTTON_COUNT) {
+                        set_bit_high(Input::mouse_buttons_up, button);
+                        set_bit_low(Input::mouse_buttons_hold, button);
+                    }
+                } break;
                 case SDL_MOUSEMOTION: {
-                    Input::mouse_pos = { event.motion.x, event.motion.y };
+                    Input::mouse_position = { event.motion.x, event.motion.y };
                 } break;
             }
         }
