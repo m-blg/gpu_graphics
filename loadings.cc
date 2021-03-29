@@ -21,7 +21,7 @@ struct Texture {
     u8* buffer;
 };
 
-#define TEXTURE_COUNT 1
+#define TEXTURE_COUNT 5
 sbuff<Texture, TEXTURE_COUNT> textures;
 
 Texture create_texture_from_file(const char* file_name) {
@@ -45,19 +45,71 @@ Texture create_texture_from_file(const char* file_name) {
     return ret;
 }
 
-
-template <u32 t_uniform_count>
-struct Shader {
-    u32 id;
-    
-    struct {
-        const char* name;
-        u32 id;
-    } uniforms[t_uniform_count];
+enum struct Type {
+    i8, i16, i32, i64, u8, u16, u32, u64, f32, f64,
+    vec2i, vec2u, vec2f, vec2d, vec3i, vec3u, vec3f, vec3d,
+    vec4i, vec4u, vec4f, vec4d, mat2f, mat3f, mat4f, count
 };
 
-#define SHADER_COUNT 1
-sbuff<u32, SHADER_COUNT> shaders;
+struct Uniform_Data {
+    u32 location;
+    Type type;
+};
+
+struct Shader {
+    u32 id;
+    darr<Uniform_Data> uniforms;
+
+    void init(u32 init_cap);
+    void shut();
+};
+
+void Shader::init(u32 init_cap) {
+    uniforms.init(init_cap);
+}
+
+void Shader::shut() {
+    uniforms.shut();
+}
+
+void set_uniform(Shader *shader, u32 index, void* data) {
+    Uniform_Data& ud = shader->uniforms[index];
+    switch (ud.type)
+    {
+    case Type::i32:
+        glUniform1i(ud.location, *(i32*)data);
+        break;    
+    case Type::f32:
+        glUniform1f(ud.location, *(f32*)data);
+        break;        
+    case Type::vec2f:
+        glUniform2f(ud.location, ((f32*)data)[0], ((f32*)data)[1]); 
+        break;    
+    case Type::vec3f:
+        glUniform3f(ud.location, ((f32*)data)[0], ((f32*)data)[1], ((f32*)data)[2]); 
+        break;    
+    case Type::vec4f:
+        glUniform4f(ud.location, ((f32*)data)[0], ((f32*)data)[1], ((f32*)data)[2], ((f32*)data)[3]); 
+        break;
+    case Type::mat2f:
+        glUniformMatrix2fv(ud.location, 1, GL_TRUE, (f32*)data);
+        break;    
+    case Type::mat3f:
+        glUniformMatrix3fv(ud.location, 1, GL_TRUE, (f32*)data);
+        break;    
+    case Type::mat4f:
+        glUniformMatrix4fv(ud.location, 1, GL_TRUE, (f32*)data);
+        break;    
+    default:
+        puts("Type is not supported");
+        break;
+    }
+    
+}
+
+
+#define SHADER_COUNT 5
+sbuff<Shader, SHADER_COUNT> shaders;
 
 u32 compile_sub_shader(u32 shader_type, dbuff<char> shader_src) {
     u32 shader_id = glCreateShader(shader_type);
@@ -82,9 +134,12 @@ u32 compile_sub_shader(u32 shader_type, dbuff<char> shader_src) {
     return shader_id;
 }
 
-u32 compile_shader_from_file(const char* file_name) {
+Shader compile_shader_from_file(const char* file_name) {
+    Shader shader;
+    shader.init(0);
+
     dstr shader_text;
-    if (!read_whole(&shader_text, file_name)) return 0;
+    if (!read_whole(&shader_text, file_name)) return {};
 
     char vsh_token[] = "#shader vertex";
     char* vsh_token_p = strstr(begin(&shader_text), vsh_token);
@@ -127,8 +182,49 @@ u32 compile_shader_from_file(const char* file_name) {
     glDeleteShader(vshader_id);
     glDeleteShader(fshader_id);
 
+    shader.id = pshader_id;
+
+    // parse uniforms
+
+    // char uniform_token[] = "uniform";
+    // char* uniform_token_p = begin(&shader_text); 
+    // while (uniform_token_p != null) {
+    //     uniform_token_p = strstr(uniform_token_p, uniform_token);
+    //     if (uniform_token_p == null) 
+    //         break;
+
+    //     uniform_token_p += sizeof(uniform_token);
+    //     uniform_token_p = strtok(uniform_token_p, " ");
+    //     char* uniform_type = uniform_token_p;
+    //     uniform_token_p = strtok(uniform_token_p, " ");
+    //     char* uniform_name = uniform_token_p;
+    //     uniform_token_p = strtok(uniform_token_p, " ");
+
+    //     Uniform_Data udata;
+    //     if (strcmp(uniform_type, "int") == 0) {
+    //         udata.type = Type::i32;
+    //     } else if (strcmp(uniform_type, "float") == 0) {
+    //         udata.type = Type::f32;
+    //     } else if (strcmp(uniform_type, "vec2") == 0) {
+    //         udata.type = Type::vec2f;
+    //     } else if (strcmp(uniform_type, "vec3") == 0) {
+    //         udata.type = Type::vec3f;
+    //     } else if (strcmp(uniform_type, "vec4") == 0) {
+    //         udata.type = Type::vec4f;
+    //     } else if (strcmp(uniform_type, "mat2") == 0) {
+    //         udata.type = Type::vec4f;
+    //     } else if (strcmp(uniform_type, "mat3") == 0) {
+    //         udata.type = Type::vec4f;
+    //     } else if (strcmp(uniform_type, "mat4") == 0) {
+    //         udata.type = Type::vec4f;
+    //     } 
+    //     udata.location = glGetUniformLocation(pshader_id, uniform_name);
+    //     dpush(&shader.uniforms, udata);
+
+    // }
+
     shader_text.shut();
-    return pshader_id;
+    return shader;
 }
 
 

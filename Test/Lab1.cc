@@ -45,7 +45,12 @@ u32 quad_vbo;
 u32 quad_ibo;
 u32 mvp_mat_loc;
 
-darr<Transform> quad_transforms;
+struct Physics_Object {
+    Transform transform;
+    Box_Collider2D collider;
+};
+
+darr<Physics_Object> quads;
 
 dbuff2u test_texture;
 u32 u_texture_loc;
@@ -61,7 +66,7 @@ Transform camera_transform = {
 Transform* main_camera;
 
 void render_quads() {
-    glUseProgram(Assets::shaders[0]);
+    glUseProgram(Assets::shaders[0].id);
 
     glBindVertexArray(quad_vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad_ibo);
@@ -69,12 +74,47 @@ void render_quads() {
 
     // glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, Assets::textures[0].id);
-    glUniform1i(u_texture_loc, 0);
+    // glUniform1i(u_texture_loc, 0);
+    i32 texture_slot_index = 0;
+    set_uniform(&Assets::shaders[0], 1, &texture_slot_index);
+    vec4f color = { 1, 1, 1, 1 };
+    set_uniform(&Assets::shaders[0], 2, &color);
+
+
+    // glUniform4f(u_texture_color_loc, tex_color.r, tex_color.g, tex_color.b, tex_color.a);
 
     mat4f vp_m = proj_xy_orth_matrix(window_size, {100, 100}, {-1, 30}) * view_matrix(&camera_transform);
 
-    for (auto it = begin(&quad_transforms); it != end(&quad_transforms); it++) {
-        mat4f mvp_m = vp_m * model_matrix(it);
+    for (auto it = begin(&quads); it != end(&quads); it++) {
+        mat4f mvp_m = vp_m * model_matrix(&it->transform);
+        // glUniformMatrix4fv(mvp_mat_loc, 1, GL_TRUE, (f32*)&mvp_m);
+        set_uniform(&Assets::shaders[0], 0, &mvp_m);
+
+        glDrawElements(GL_TRIANGLES, cap(&quad_mesh.index_buffer) * 3, GL_UNSIGNED_INT, null);
+    }
+}
+
+void render_box_colliders2D() {
+    glUseProgram(Assets::shaders[0].id);
+
+    glBindVertexArray(quad_vao);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quad_ibo);
+
+    glBindTexture(GL_TEXTURE_2D, Assets::textures[1].id);
+    glUniform1i(u_texture_loc, 0);
+
+
+    mat4f vp_m = proj_xy_orth_matrix(window_size, {100, 100}, {-1, 30}) * view_matrix(&camera_transform);
+
+    for (auto it = begin(&quads); it != end(&quads); it++) {
+        Box_Collider2D& bc = it->collider;
+        vec2f collider_size = bc.rt - bc.lb;
+        vec2f collider_center = (collider_size) / 2.0f;
+        Transform t = it->transform;
+        t.position += vec3f(collider_center.x, collider_size.y, 0);
+        t.scale = { t.scale.x * collider_size.x, t.scale.y * collider_size.y, t.scale.z };
+        mat4f mvp_m = vp_m * model_matrix(&it->transform);
+
         glUniformMatrix4fv(mvp_mat_loc, 1, GL_TRUE, (f32*)&mvp_m);
 
         glDrawElements(GL_TRIANGLES, cap(&quad_mesh.index_buffer) * 3, GL_UNSIGNED_INT, null);
@@ -85,7 +125,7 @@ void render_quads() {
 void game_init() {
     Input::input_init();
     Assets::load_shaders<1>({"Test/sprite.glsl"});
-    Assets::load_textures<1>({"Test/Assets/TestTexture.png"});
+    Assets::load_textures<2>({"Test/Assets/TestTexture.png", "Test/Assets/BoxCollider2D.png"});
     window_size = {1280, 720};
 
 
@@ -112,9 +152,9 @@ void game_init() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, size(&quad_mesh.index_buffer), begin(&quad_mesh.index_buffer), GL_STATIC_DRAW);
 
 
-    glUseProgram(Assets::shaders[0]);
-    mvp_mat_loc = glGetUniformLocation(Assets::shaders[0], "u_mpv_mat");
-    u_texture_loc = glGetUniformLocation(Assets::shaders[0], "u_texture");
+    glUseProgram(Assets::shaders[0].id);
+    mvp_mat_loc = glGetUniformLocation(Assets::shaders[0].id, "u_mpv_mat");
+    u_texture_loc = glGetUniformLocation(Assets::shaders[0].id, "u_texture");
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, Assets::textures[0].id);
@@ -129,9 +169,9 @@ void game_init() {
 
     main_camera = &camera_transform;
 
-    quad_transforms.init(1);
-    quad_transforms.len = 1;
-    quad_transforms[0].init();
+    quads.init(1);
+    quads.len = 1;
+    quads[0].transform.init();
 
 }
 
@@ -150,10 +190,10 @@ void game_update() {
     }
 
     if (Input::is_key_held('w')) {
-        camera_transform.position += vec3f(0, 0, 0.1);
+        camera_transform.position += vec3f(0, 0.1, 0);
     }
     if (Input::is_key_held('s')) {
-        camera_transform.position += vec3f(0, 0, -0.1);
+        camera_transform.position += vec3f(0, -0.1, 0);
     }
     if (Input::is_key_held('a')) {
         camera_transform.position += vec3f(-0.1, 0, 0);
@@ -166,7 +206,7 @@ void game_update() {
         Transform t; t.init();
         vec2f temp = screen_to_world_space(Input::mouse_position, *main_camera, window_size, {100, 100});
         t.position = {temp.x, temp.y, 0};
-        dpush(&quad_transforms, t);
+        dpush(&quads, {t});
     }
 
     render_quads();
