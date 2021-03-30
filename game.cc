@@ -9,13 +9,16 @@
 using namespace cp;
 
 
-
 bool is_running = true;
 
 vec2i window_max_size;
 vec2i window_size;
 
 dbuff2u frame_buffer;
+
+namespace GTime {
+    f32 dt;
+}
 
 // input
 #define KEY_COUNT 256

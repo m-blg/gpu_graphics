@@ -17,6 +17,7 @@ struct {
     u32 vbo;
     u32 ibo;
     u32 shader;
+    u32 texures[10];
 } gl_cache;
 
 void bind_vao(u32 vao) {
@@ -50,6 +51,14 @@ void bind_shader(u32 shader) {
     }
 }
 
+void bind_texture(u32 texture, i32 slot) {
+    if (texture != gl_cache.texures[slot]) {
+        glActiveTexture(GL_TEXTURE0 + slot);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        gl_cache.texures[slot] = texture;
+    }
+}
+
 struct Mesh {
     dbuff<vec3f> vertex_buffer;
     dbuff<u32[3]> index_buffer;
@@ -70,8 +79,8 @@ void Mesh::shut() {
 
 struct Material_Sprite2D {
     u32 shader_name;
-
     u32 texture_name;
+    vec4f color;
 };
 
 struct Transform {
@@ -204,8 +213,91 @@ struct Rect {
 };
 
 template <typename T1, typename T2>
-bool rect_is_contained(Rect<T1> rect, vec2<T2> p) {
+bool is_contained(Rect<T1> rect, vec2<T2> p) {
     return (rect.lb.x <= p.x && p.x <= rect.rt.x && rect.lb.y <= p.y && p.y <= rect.rt.y);
 }
 
+template <typename T>
+bool do_intersect(Rect<T> rect1, Rect<T> rect2) {
+    return (
+        rect1.lb.x < rect2.rt.x &&
+        rect1.lb.y < rect2.rt.y &&
+        rect1.rt.x > rect2.lb.x &&
+        rect1.rt.y > rect2.lb.y
+    );
+}
+
 using Box_Collider2D = Rect<f32>;
+
+bool is_contained(Box_Collider2D *c, vec2f p) {
+    return is_contained(*c, p);
+}
+
+struct Sphere_Collider2D {
+    vec2f origin;
+    f32 radius;
+};
+
+bool is_contained(Sphere_Collider2D *c, vec2f p) {
+    vec2f delta = c->origin - p;
+    f32 rsum = c->radius;
+    return (delta.x * delta.x + delta.y * delta.y <= rsum * rsum);
+}
+
+enum struct Collider_Type {
+    Box_Collider2D, Sphere_Collider2D
+};
+
+struct Collider {
+    Collider_Type type;
+    union {
+        Box_Collider2D box_collider2d;
+        Sphere_Collider2D sphere_collider2d;
+    };
+};
+
+bool is_contained(Collider *c, vec2f p) {
+    if (c->type == Collider_Type::Box_Collider2D) {
+        return is_contained(&c->box_collider2d, p);
+    } else if (c->type == Collider_Type::Sphere_Collider2D) {
+        return is_contained(&c->sphere_collider2d, p);
+    }    
+    return false;
+}
+
+bool do_collide(Box_Collider2D *c1, Box_Collider2D *c2) {
+    return do_intersect(*c1, *c2);
+}
+
+bool do_collide(Sphere_Collider2D *c1, Sphere_Collider2D *c2) {
+    vec2f delta = c2->origin - c1->origin;
+    f32 rsum = c1->radius + c2->radius;
+    return (delta.x * delta.x + delta.y * delta.y <= rsum * rsum);
+}
+
+bool do_collide(Box_Collider2D *c1, Sphere_Collider2D *c2) {
+    return false;
+}
+
+bool do_collide(Sphere_Collider2D *c1, Box_Collider2D *c2) {
+    return do_collide(c2, c1);
+}
+
+
+
+bool do_collide(Collider *c1, Collider *c2) {
+    if (c1->type == Collider_Type::Box_Collider2D) {
+        if (c2->type == Collider_Type::Box_Collider2D) {
+            return do_collide(&c1->box_collider2d, &c2->box_collider2d);
+        } else if (c2->type == Collider_Type::Sphere_Collider2D) {
+            return do_collide(&c1->box_collider2d, &c2->sphere_collider2d);
+        }    
+    } else if (c1->type == Collider_Type::Sphere_Collider2D) {
+        if (c2->type == Collider_Type::Box_Collider2D) {
+            return do_collide(&c1->sphere_collider2d, &c2->box_collider2d);
+        } else if (c2->type == Collider_Type::Sphere_Collider2D) {
+            return do_collide(&c1->sphere_collider2d, &c2->sphere_collider2d);
+        }    
+    }    
+    return false;
+}

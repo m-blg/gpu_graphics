@@ -7,8 +7,17 @@
 #include "cp_lib/io.cc"
 #include "cp_lib/array.cc"
 #include "cp_lib/vector.cc"
+#include "cp_lib/matrix.cc"
 
 using namespace cp;
+
+
+
+enum struct Type {
+    i8, i16, i32, i64, u8, u16, u32, u64, f32, f64,
+    vec2i, vec2u, vec2f, vec2d, vec3i, vec3u, vec3f, vec3d,
+    vec4i, vec4u, vec4f, vec4d, mat2f, mat3f, mat4f, count
+};
 
 namespace Assets {
 
@@ -45,14 +54,9 @@ Texture create_texture_from_file(const char* file_name) {
     return ret;
 }
 
-enum struct Type {
-    i8, i16, i32, i64, u8, u16, u32, u64, f32, f64,
-    vec2i, vec2u, vec2f, vec2d, vec3i, vec3u, vec3f, vec3d,
-    vec4i, vec4u, vec4f, vec4d, mat2f, mat3f, mat4f, count
-};
 
 struct Uniform_Data {
-    u32 location;
+    i32 location;
     Type type;
 };
 
@@ -72,39 +76,34 @@ void Shader::shut() {
     uniforms.shut();
 }
 
-void set_uniform(Shader *shader, u32 index, void* data) {
-    Uniform_Data& ud = shader->uniforms[index];
-    switch (ud.type)
-    {
-    case Type::i32:
-        glUniform1i(ud.location, *(i32*)data);
-        break;    
-    case Type::f32:
-        glUniform1f(ud.location, *(f32*)data);
-        break;        
-    case Type::vec2f:
-        glUniform2f(ud.location, ((f32*)data)[0], ((f32*)data)[1]); 
-        break;    
-    case Type::vec3f:
-        glUniform3f(ud.location, ((f32*)data)[0], ((f32*)data)[1], ((f32*)data)[2]); 
-        break;    
-    case Type::vec4f:
-        glUniform4f(ud.location, ((f32*)data)[0], ((f32*)data)[1], ((f32*)data)[2], ((f32*)data)[3]); 
-        break;
-    case Type::mat2f:
-        glUniformMatrix2fv(ud.location, 1, GL_TRUE, (f32*)data);
-        break;    
-    case Type::mat3f:
-        glUniformMatrix3fv(ud.location, 1, GL_TRUE, (f32*)data);
-        break;    
-    case Type::mat4f:
-        glUniformMatrix4fv(ud.location, 1, GL_TRUE, (f32*)data);
-        break;    
-    default:
-        puts("Type is not supported");
-        break;
-    }
-    
+void add_uniform(Shader *shader, const char* name, Type type) {
+    dpush(&shader->uniforms, 
+            { glGetUniformLocation(shader->id, name), type});
+}
+
+void set_uniform(Shader *shader, u32 index, i32 data) {
+    glUniform1i(shader->uniforms[index].location, data);
+}
+void set_uniform(Shader *shader, u32 index, f32 data) {
+    glUniform1f(shader->uniforms[index].location, data);
+}
+void set_uniform(Shader *shader, u32 index, vec2f data) {
+    glUniform2f(shader->uniforms[index].location, data[0], data[1]);
+}
+void set_uniform(Shader *shader, u32 index, vec3f data) {
+    glUniform3f(shader->uniforms[index].location, data[0], data[1], data[2]);
+}
+void set_uniform(Shader *shader, u32 index, vec4f data) {
+    glUniform4f(shader->uniforms[index].location, data[0], data[1], data[2], data[3]);
+}
+void set_uniform(Shader *shader, u32 index, mat2f data) {
+    glUniformMatrix2fv(shader->uniforms[index].location, 1, GL_TRUE, (f32*)&data);
+}
+void set_uniform(Shader *shader, u32 index, mat3f data) {
+    glUniformMatrix3fv(shader->uniforms[index].location, 1, GL_TRUE, (f32*)&data);
+}
+void set_uniform(Shader *shader, u32 index, mat4f data) {
+    glUniformMatrix4fv(shader->uniforms[index].location, 1, GL_TRUE, (f32*)&data);
 }
 
 

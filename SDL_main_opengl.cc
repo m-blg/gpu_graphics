@@ -4,6 +4,7 @@
 #include <SDL2/SDL.h> 
 #include <SDL2/SDL_opengl.h>
 #include <SDL2/SDL_timer.h> 
+#include <time.h>
 
 #include "cp_lib/basic.cc"
 #include "cp_lib/vector.cc"
@@ -49,7 +50,7 @@ int main()
 
     game_init();
 
-
+    clock_t pre_clock = clock();
     while (is_running) {
         for (u32 i = 0; i < bitfld_byte_count(KEY_COUNT); i++) {
             Input::keys_down.buffer[i] = 0;
@@ -98,6 +99,10 @@ int main()
                 } break;
             }
         }
+
+        clock_t new_clock = clock();
+        GTime::dt = (f32)(new_clock - pre_clock) * 1000 / CLOCKS_PER_SEC;
+        pre_clock = new_clock;
 
         game_update();
 
