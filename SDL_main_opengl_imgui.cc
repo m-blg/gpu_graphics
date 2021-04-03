@@ -74,7 +74,8 @@ int main()
 
     game_init();
 
-    clock_t pre_clock = clock();
+    // clock_t pre_clock = clock();
+    u32 pre_clock = SDL_GetTicks();
     while (is_running) {
         for (u32 i = 0; i < Input::keys_down.cap; i++) {
             Input::keys_down.buffer[i] = 0;
@@ -84,6 +85,7 @@ int main()
             Input::mouse_buttons_down.buffer[i] = 0;
             Input::mouse_buttons_hold.buffer[i] = 0;
         }
+        Input::mouse_wheel = {};
 
 
         // Process events.
@@ -125,11 +127,19 @@ int main()
                 case SDL_MOUSEMOTION: {
                     Input::mouse_position = { event.motion.x, event.motion.y };
                 } break;
+                case SDL_MOUSEWHEEL: {
+                    Input::mouse_wheel = { event.wheel.x, event.wheel.y };
+                } break;
             }
         }
 
-        clock_t new_clock = clock();
-        GTime::dt = (f32)(new_clock - pre_clock) / CLOCKS_PER_SEC;
+        // clock_t new_clock = clock();
+        // GTime::dt = (f32)(new_clock - pre_clock) / CLOCKS_PER_SEC;
+        // pre_clock = new_clock;
+
+        // wall time
+        u32 new_clock = SDL_GetTicks();
+        GTime::dt = (f32)(new_clock - pre_clock) / 1000;
         pre_clock = new_clock;
 
         // render gui
@@ -138,6 +148,7 @@ int main()
         ImGui::NewFrame();        
 
         game_update();
+        // game_fixed_update();
         draw_gui();
 
         ImGui::Render();

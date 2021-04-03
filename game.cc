@@ -18,6 +18,7 @@ dbuff2u frame_buffer;
 
 namespace GTime {
     f32 dt;
+    f32 fixed_dt;
 }
 
 // input
@@ -32,7 +33,10 @@ namespace Input {
     dbitfld mouse_buttons_down;
     dbitfld mouse_buttons_hold;
     dbitfld mouse_buttons_up;
+
     vec2i mouse_position;
+
+    vec2i mouse_wheel;
 
 
     void input_init() {
@@ -55,6 +59,10 @@ namespace Input {
             mouse_buttons_hold.buffer[i] = 0;           
             mouse_buttons_up.buffer[i] = 0;       
         }
+
+        mouse_position = {};
+
+        mouse_wheel = {};
     }
 
 

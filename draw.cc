@@ -205,6 +205,19 @@ vec2f screen_to_world_space(vec2f p, Transform camera_transform, vec2f window_si
     return view + vec2f(camera_transform.position.x, camera_transform.position.y);
 }
 
+vec2f closest_point_line(vec2f p1, vec2f p2, vec2f p) {
+    vec2f u = p2 - p1;
+    f32 t = - dot(u, (p1 - p)) / dot(u, u);
+    return p1 + t * u;
+}
+
+vec2f closest_point_segment(vec2f p1, vec2f p2, vec2f p) {
+    vec2f u = p2 - p1;
+    f32 t = - dot(u, (p1 - p)) / dot(u, u);
+    t = max(0.0f, min(1.0f, t));
+    return p1 + t * u;
+}
+
 
 template <typename T>
 struct Rect {
@@ -227,77 +240,8 @@ bool do_intersect(Rect<T> rect1, Rect<T> rect2) {
     );
 }
 
-using Box_Collider2D = Rect<f32>;
-
-bool is_contained(Box_Collider2D *c, vec2f p) {
-    return is_contained(*c, p);
+template <typename T>
+vec2<T> centerof(Rect<T> rect) {
+    return (rect.lb + rect.rt) / (T)2;
 }
 
-struct Sphere_Collider2D {
-    vec2f origin;
-    f32 radius;
-};
-
-bool is_contained(Sphere_Collider2D *c, vec2f p) {
-    vec2f delta = c->origin - p;
-    f32 rsum = c->radius;
-    return (delta.x * delta.x + delta.y * delta.y <= rsum * rsum);
-}
-
-enum struct Collider_Type {
-    Box_Collider2D, Sphere_Collider2D
-};
-
-struct Collider {
-    Collider_Type type;
-    union {
-        Box_Collider2D box_collider2d;
-        Sphere_Collider2D sphere_collider2d;
-    };
-};
-
-bool is_contained(Collider *c, vec2f p) {
-    if (c->type == Collider_Type::Box_Collider2D) {
-        return is_contained(&c->box_collider2d, p);
-    } else if (c->type == Collider_Type::Sphere_Collider2D) {
-        return is_contained(&c->sphere_collider2d, p);
-    }    
-    return false;
-}
-
-bool do_collide(Box_Collider2D *c1, Box_Collider2D *c2) {
-    return do_intersect(*c1, *c2);
-}
-
-bool do_collide(Sphere_Collider2D *c1, Sphere_Collider2D *c2) {
-    vec2f delta = c2->origin - c1->origin;
-    f32 rsum = c1->radius + c2->radius;
-    return (delta.x * delta.x + delta.y * delta.y <= rsum * rsum);
-}
-
-bool do_collide(Box_Collider2D *c1, Sphere_Collider2D *c2) {
-    return false;
-}
-
-bool do_collide(Sphere_Collider2D *c1, Box_Collider2D *c2) {
-    return do_collide(c2, c1);
-}
-
-
-
-bool do_collide(Collider *c1, Collider *c2) {
-    if (c1->type == Collider_Type::Box_Collider2D) {
-        if (c2->type == Collider_Type::Box_Collider2D) {
-            return do_collide(&c1->box_collider2d, &c2->box_collider2d);
-        } else if (c2->type == Collider_Type::Sphere_Collider2D) {
-            return do_collide(&c1->box_collider2d, &c2->sphere_collider2d);
-        }    
-    } else if (c1->type == Collider_Type::Sphere_Collider2D) {
-        if (c2->type == Collider_Type::Box_Collider2D) {
-            return do_collide(&c1->sphere_collider2d, &c2->box_collider2d);
-        } else if (c2->type == Collider_Type::Sphere_Collider2D) {
-            return do_collide(&c1->sphere_collider2d, &c2->sphere_collider2d);
-        }    
-    }    
-    return false;
-}
