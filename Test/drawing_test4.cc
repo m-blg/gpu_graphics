@@ -5,7 +5,7 @@
 
 
 #include "../loadings.cc"
-#include "../mesh.cc"
+#include "../draw.cc"
 
 #include "cp_lib/basic.cc"
 #include "cp_lib/array.cc"
@@ -126,9 +126,9 @@ void game_init() {
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_triangles), begin(&cube_triangles), GL_STATIC_DRAW);
 
 
-    glUseProgram(Assets::shaders[0]);
-    tr_m_loc = glGetUniformLocation(Assets::shaders[0], "u_tr_m");
-    u_texture_loc = glGetUniformLocation(Assets::shaders[0], "u_texture");
+    glUseProgram(Assets::shaders[0].id);
+    tr_m_loc = glGetUniformLocation(Assets::shaders[0].id, "u_tr_m");
+    u_texture_loc = glGetUniformLocation(Assets::shaders[0].id, "u_texture");
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, Assets::textures[0].id);
@@ -199,12 +199,12 @@ void game_update() {
         cube_transform.rotation = inverse(rot_z) * cube_transform.rotation;
     }
 
-    glUseProgram(Assets::shaders[0]);
+    glUseProgram(Assets::shaders[0].id);
     mat4f mvp_m;
     mvp_m = proj_xy_orth_matrix(window_size, {100, 100}, {-1, 30}) * view_matrix(&camera_transform) *  model_matrix(&cube_transform);
     glUniformMatrix4fv(tr_m_loc, 1, GL_TRUE, (f32*)&mvp_m);
     glUniform1i(u_texture_loc, 0);
-    u32 u_tex_color_loc = glGetUniformLocation(Assets::shaders[0], "u_tex_color");
+    u32 u_tex_color_loc = glGetUniformLocation(Assets::shaders[0].id, "u_tex_color");
 
     glUniform4f(u_tex_color_loc, tex_color.x, tex_color.y, tex_color.z, tex_color.w);
 

@@ -10,11 +10,12 @@ using namespace cp;
 
 
 bool is_running = true;
+bool is_fullscreen = false;
 
 vec2i window_max_size;
 vec2i window_size;
 
-dbuff2u frame_buffer;
+SDL_Window* window;
 
 namespace GTime {
     f32 dt;

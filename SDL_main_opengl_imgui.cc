@@ -35,7 +35,7 @@ int main()
 
     SDL_Init(SDL_INIT_EVERYTHING);
 
-    SDL_Window* window = SDL_CreateWindow("GPU Graphics", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_size.x, window_size.y, SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("GPU Graphics", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_size.x, window_size.y, SDL_WINDOW_OPENGL);
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 4);
@@ -52,7 +52,7 @@ int main()
     puts((char*)glGetString(GL_VERSION));
 
     glEnable(GL_DEBUG_OUTPUT);
-    glDebugMessageCallback(gl_debug_callback, null);
+    // glDebugMessageCallback(gl_debug_callback, null);
     //
     
     // gui init
@@ -83,7 +83,7 @@ int main()
         }
         for (u32 i = 0; i < bitfld_byte_count(MOUSE_BUTTON_COUNT); i++) {
             Input::mouse_buttons_down.buffer[i] = 0;
-            Input::mouse_buttons_hold.buffer[i] = 0;
+            Input::mouse_buttons_up.buffer[i] = 0;
         }
         Input::mouse_wheel = {};
 
@@ -98,6 +98,31 @@ int main()
             switch(event.type)
             {
                 case SDL_QUIT: is_running = false; break;
+
+                case SDL_WINDOWEVENT: {
+                    switch (event.window.event) {
+                        case SDL_WINDOWEVENT_RESIZED: {
+                            window_size = {event.window.data1, event.window.data2};
+                            glViewport(0, 0, window_size.x, window_size.y);
+                        } break;
+                        case SDL_WINDOWEVENT_SIZE_CHANGED: {
+                            window_size = {event.window.data1, event.window.data2};
+                            glViewport(0, 0, window_size.x, window_size.y);
+                        } break;
+                        // case SDL_WINDOWEVENT_MINIMIZED:
+                        //     printf("Window %d minimized", event.window.windowID);
+                        //     break;
+                        // case SDL_WINDOWEVENT_MAXIMIZED:
+                        //     printf("Window %d maximized", event.window.windowID);
+                        //     break;
+                        // case SDL_WINDOWEVENT_RESTORED:
+                        //     printf("Window %d restored", event.window.windowID);
+                        //     break;
+                    }
+                } break;
+
+
+                // input handling
                 case SDL_KEYDOWN: {
                     if (event.key.keysym.sym < KEY_COUNT) {
                         set_bit_high(Input::keys_down, event.key.keysym.sym);
@@ -114,7 +139,7 @@ int main()
                     u8 button = event.button.button - 1;
                     if (button < MOUSE_BUTTON_COUNT) {
                         set_bit_high(Input::mouse_buttons_down, button);
-                        set_bit_low(Input::mouse_buttons_hold, button);
+                        set_bit_high(Input::mouse_buttons_hold, button);
                     }
                 } break;
                 case SDL_MOUSEBUTTONUP: {
