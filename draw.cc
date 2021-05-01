@@ -62,19 +62,16 @@ void bind_texture(u32 texture, i32 slot) {
 struct Mesh {
     dbuff<vec3f> vertex_buffer;
     dbuff<u32[3]> index_buffer;
-
-    void init(u32 vb_init_cap, u32 ib_init_cap);
-    void shut();
 };
 
-void Mesh::init(u32 vb_init_cap, u32 ib_init_cap) {
-    vertex_buffer.init(vb_init_cap);
-    index_buffer.init(ib_init_cap);
+void init(Mesh *self, u32 vb_init_cap, u32 ib_init_cap) {
+    init(&self->vertex_buffer, vb_init_cap);
+    init(&self->index_buffer, ib_init_cap);
 }
 
-void Mesh::shut() {
-    vertex_buffer.shut();
-    index_buffer.shut();
+void shut(Mesh *self) {
+    shut(&self->vertex_buffer);
+    shut(&self->index_buffer);
 }
 
 struct Material_Sprite2D {

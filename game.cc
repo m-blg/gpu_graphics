@@ -41,9 +41,9 @@ namespace Input {
 
 
     void input_init() {
-        Input::keys_down.init_bits(KEY_COUNT);
-        Input::keys_hold.init_bits(KEY_COUNT);
-        Input::keys_up.init_bits(KEY_COUNT);
+        init_bits(&Input::keys_down, KEY_COUNT);
+        init_bits(&Input::keys_hold, KEY_COUNT);
+        init_bits(&Input::keys_up, KEY_COUNT);
 
         for (u32 i = 0; i < bitfld_byte_count(KEY_COUNT); i++) {
             keys_down.buffer[i] = 0;           
@@ -51,9 +51,9 @@ namespace Input {
             keys_up.buffer[i] = 0;       
         }
 
-        Input::mouse_buttons_down.init_bits(MOUSE_BUTTON_COUNT);
-        Input::mouse_buttons_hold.init_bits(MOUSE_BUTTON_COUNT);
-        Input::mouse_buttons_up.init_bits(MOUSE_BUTTON_COUNT);
+        init_bits(&Input::mouse_buttons_down, MOUSE_BUTTON_COUNT);
+        init_bits(&Input::mouse_buttons_hold, MOUSE_BUTTON_COUNT);
+        init_bits(&Input::mouse_buttons_up, MOUSE_BUTTON_COUNT);
         
         for (u32 i = 0; i < bitfld_byte_count(MOUSE_BUTTON_COUNT); i++) {
             mouse_buttons_down.buffer[i] = 0;           
@@ -68,13 +68,13 @@ namespace Input {
 
 
     void input_shut() {
-        Input::keys_down.shut();
-        Input::keys_hold.shut();
-        Input::keys_up.shut();
+        shut(&Input::keys_down);
+        shut(&Input::keys_hold);
+        shut(&Input::keys_up);
 
-        Input::mouse_buttons_down.shut();
-        Input::mouse_buttons_hold.shut();
-        Input::mouse_buttons_up.shut();
+        shut(&Input::mouse_buttons_down);
+        shut(&Input::mouse_buttons_hold);
+        shut(&Input::mouse_buttons_up);
     }
 
     bool is_key_down(u8 key) {

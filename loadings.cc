@@ -68,12 +68,12 @@ struct Shader {
     void shut();
 };
 
-void Shader::init(u32 init_cap) {
-    uniforms.init(init_cap);
+void init(Shader *self, u32 uniform_count) {
+    init(&self->uniforms, uniform_count);
 }
 
-void Shader::shut() {
-    uniforms.shut();
+void shut(Shader *self) {
+    shut(&self->uniforms);
 }
 
 void add_uniform(Shader *shader, const char* name, Type type) {
@@ -135,7 +135,7 @@ u32 compile_sub_shader(u32 shader_type, dbuff<char> shader_src) {
 
 Shader compile_shader_from_file(const char* file_name) {
     Shader shader;
-    shader.init(0);
+    init(&shader, 0);
 
     dstr shader_text;
     if (!read_whole(&shader_text, file_name)) return {};
@@ -222,7 +222,7 @@ Shader compile_shader_from_file(const char* file_name) {
 
     // }
 
-    shader_text.shut();
+    shut(&shader_text);
     return shader;
 }
 
