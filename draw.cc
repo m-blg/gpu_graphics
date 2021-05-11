@@ -59,6 +59,27 @@ void bind_texture(u32 texture, i32 slot) {
     }
 }
 
+template <typename T>
+void gl_vbo_data(dbuff<T> buffer, GLenum usage) {
+    glBufferData(GL_ARRAY_BUFFER, size(&buffer), begin(&buffer), usage);
+}
+
+template <typename T>
+void gl_vbo_sub_data(dbuff<T> buffer, u32 offset=0) {
+    glBufferSubData(GL_ARRAY_BUFFER, offset, size(&buffer), begin(&buffer));
+}
+
+template <typename T>
+void gl_ibo_data(dbuff<T> buffer, GLenum usage) {
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, size(&buffer), begin(&buffer), usage);
+}
+
+template <typename T>
+void gl_ibo_sub_data(dbuff<T> buffer, u32 offset=0) {
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size(&buffer), begin(&buffer));
+}
+
+
 struct Mesh {
     dbuff<vec3f> vertex_buffer;
     dbuff<u32[3]> index_buffer;

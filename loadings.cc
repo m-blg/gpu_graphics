@@ -77,7 +77,7 @@ void shut(Shader *self) {
 }
 
 void add_uniform(Shader *shader, const char* name, Type type) {
-    dpush(&shader->uniforms, 
+    push(&shader->uniforms, 
             { glGetUniformLocation(shader->id, name), type});
 }
 
