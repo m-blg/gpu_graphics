@@ -61,22 +61,22 @@ void bind_texture(u32 texture, i32 slot) {
 
 template <typename T>
 void gl_vbo_data(dbuff<T> buffer, GLenum usage) {
-    glBufferData(GL_ARRAY_BUFFER, size(&buffer), begin(&buffer), usage);
+    glBufferData(GL_ARRAY_BUFFER, size(&buffer), beginp(&buffer), usage);
 }
 
 template <typename T>
 void gl_vbo_sub_data(dbuff<T> buffer, u32 offset=0) {
-    glBufferSubData(GL_ARRAY_BUFFER, offset, size(&buffer), begin(&buffer));
+    glBufferSubData(GL_ARRAY_BUFFER, offset, size(&buffer), beginp(&buffer));
 }
 
 template <typename T>
 void gl_ibo_data(dbuff<T> buffer, GLenum usage) {
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, size(&buffer), begin(&buffer), usage);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, size(&buffer), beginp(&buffer), usage);
 }
 
 template <typename T>
 void gl_ibo_sub_data(dbuff<T> buffer, u32 offset=0) {
-    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size(&buffer), begin(&buffer));
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, size(&buffer), beginp(&buffer));
 }
 
 
@@ -114,6 +114,13 @@ void Transform::init() {
     rotation = { 1, 0, 0, 0 }; 
     scale = { 1, 1, 1 };
 }
+
+
+struct Camera {
+    Transform transform;
+    vec2f pixels_per_unit;
+    vec2f z_bounds;
+};
 
 
 
@@ -167,7 +174,7 @@ template <typename t_Render_Object>
 void render(t_Render_Object *self) {
     glUseProgram(self->material->shader_id);
     glBindBuffer(GL_ARRAY_BUFFER, self->vbo_id);
-    glBufferData(GL_ARRAY_BUFFER, cap(&self->mesh->vertex_buffer), begin(&self->mesh->vertex_buffer), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, cap(&self->mesh->vertex_buffer), beginp(&self->mesh->vertex_buffer), GL_DYNAMIC_DRAW);
 
     // glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, self->mesh->vertex_buffer.stride, 0);
     // glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, self->mesh->vertex_buffer.stride, (void*)sizeof(vec2f));
@@ -223,6 +230,12 @@ vec2f screen_to_world_space(vec2f p, Transform camera_transform, vec2f window_si
     return view + vec2f(camera_transform.position.x, camera_transform.position.y);
 }
 
+vec3f screen_to_world_space(vec2f p, Camera camera) {
+    vec3f cam_space_pos = vec3f(screen_to_view_space(p, window_size, camera.pixels_per_unit), camera.z_bounds.x);
+
+    return camera.transform.position + camera.transform.rotation * cam_space_pos;
+}
+
 vec2f closest_point_line(vec2f p1, vec2f p2, vec2f p) {
     vec2f u = p2 - p1;
     f32 t = - dot(u, (p1 - p)) / dot(u, u);
@@ -243,6 +256,16 @@ struct Rect {
     vec2<T> rt;
 };
 
+using Rectf = Rect<f32>;
+using Rectd = Rect<f64>;
+using Recti = Rect<i32>;
+using Rectu = Rect<u32>;
+
+template <typename T>
+vec2<T> size(Rect<T> rect) {
+    return rect.rt - rect.lb;
+}
+
 template <typename T1, typename T2>
 bool is_contained(Rect<T1> rect, vec2<T2> p) {
     return (rect.lb.x <= p.x && p.x <= rect.rt.x && rect.lb.y <= p.y && p.y <= rect.rt.y);
@@ -262,4 +285,5 @@ template <typename T>
 vec2<T> centerof(Rect<T> rect) {
     return (rect.lb + rect.rt) / (T)2;
 }
+
 

@@ -21,7 +21,7 @@ void gl_debug_callback(GLenum source,
     puts(message);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 
     window_size = {1280, 720};

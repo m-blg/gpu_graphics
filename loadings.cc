@@ -82,27 +82,35 @@ void add_uniform(Shader *shader, const char* name, Type type) {
 }
 
 void set_uniform(Shader *shader, u32 index, i32 data) {
+    assert(shader->uniforms[index].type == Type::i32);
     glUniform1i(shader->uniforms[index].location, data);
 }
 void set_uniform(Shader *shader, u32 index, f32 data) {
+    assert(shader->uniforms[index].type == Type::f32);
     glUniform1f(shader->uniforms[index].location, data);
 }
 void set_uniform(Shader *shader, u32 index, vec2f data) {
+    assert(shader->uniforms[index].type == Type::vec2f);
     glUniform2f(shader->uniforms[index].location, data[0], data[1]);
 }
 void set_uniform(Shader *shader, u32 index, vec3f data) {
+    assert(shader->uniforms[index].type == Type::vec3f);
     glUniform3f(shader->uniforms[index].location, data[0], data[1], data[2]);
 }
 void set_uniform(Shader *shader, u32 index, vec4f data) {
+    assert(shader->uniforms[index].type == Type::vec4f);
     glUniform4f(shader->uniforms[index].location, data[0], data[1], data[2], data[3]);
 }
 void set_uniform(Shader *shader, u32 index, mat2f data) {
+    assert(shader->uniforms[index].type == Type::mat2f);
     glUniformMatrix2fv(shader->uniforms[index].location, 1, GL_TRUE, (f32*)&data);
 }
 void set_uniform(Shader *shader, u32 index, mat3f data) {
+    assert(shader->uniforms[index].type == Type::mat3f);
     glUniformMatrix3fv(shader->uniforms[index].location, 1, GL_TRUE, (f32*)&data);
 }
 void set_uniform(Shader *shader, u32 index, mat4f data) {
+    assert(shader->uniforms[index].type == Type::mat4f);
     glUniformMatrix4fv(shader->uniforms[index].location, 1, GL_TRUE, (f32*)&data);
 }
 
@@ -137,11 +145,11 @@ Shader compile_shader_from_file(const char* file_name) {
     Shader shader;
     init(&shader, 0);
 
-    dstr shader_text;
+    dstrb shader_text;
     if (!read_whole(&shader_text, file_name)) return {};
 
     char vsh_token[] = "#shader vertex";
-    char* vsh_token_p = strstr(begin(&shader_text), vsh_token);
+    char* vsh_token_p = strstr(beginp(&shader_text), vsh_token);
     char* vsh_bp = vsh_token_p + sizeof(vsh_token);
 
     char fsh_token[] = "#shader fragment";
@@ -149,7 +157,7 @@ Shader compile_shader_from_file(const char* file_name) {
     char* fsh_bp = fsh_token_p + sizeof(fsh_token);
 
     u32 vshader_id = compile_sub_shader(GL_VERTEX_SHADER, {vsh_bp, u32(fsh_token_p - vsh_bp - 1) });
-    u32 fshader_id = compile_sub_shader(GL_FRAGMENT_SHADER, {fsh_bp, u32(end(&shader_text) - fsh_bp) });
+    u32 fshader_id = compile_sub_shader(GL_FRAGMENT_SHADER, {fsh_bp, u32(endp(&shader_text) - fsh_bp) });
 
     u32 pshader_id = glCreateProgram();
     glAttachShader(pshader_id, vshader_id);
